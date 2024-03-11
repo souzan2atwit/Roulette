@@ -29,7 +29,7 @@ def main():
     print(message)
     
     # Make a guess (0 for even, 1 for odd)
-    player_guess = input("Make your guess (0 for even, 1 for odd): ")
+    player_guess = input("Guess what the number will be: ")
     client_socket.sendall(player_guess.encode("utf-8"))
     
     # Receive the result of the guess and the correct answer
