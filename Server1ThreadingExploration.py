@@ -10,21 +10,33 @@ import threading
 import random
 
 # Constants
-SERVER_ADDRESS = ("localhost", 9999)
-NUM_CLIENTS = 2  # Number of clients needed to make a guess
+
+#Both programs will solely be running on my computer, server adress is 9999
+SERVER_ADDRESS = ("localhost", 9999) 
+
+# Number of clients needed to make a guess for program to continue
+NUM_CLIENTS = 2  
 
 # Global variables to track client guesses and connection status
-clients = []
-client_guesses = []
+
+#Tracks how many clients have joined the game
+#Does not currently troubleshoot for disconection 
+clients = [] 
+
+#Stores the guesses of the clients
+#Either odd or even
+#Can implement individual number guesses 
+#Can implement colors such as black or red
+client_guesses = [] 
 
 # Function to handle each player's connection
 def handle_player(player_socket, player_address):
-    global clients
+    global clients 
     global client_guesses
     
     player_name = player_socket.recv(1024).decode("utf-8")
     print(f"{player_name} joined the game.")
-    player_socket.sendall(f"Hello {player_name}, welcome to Roulette. Guess whether the number is even or odd (0 for even, 1 for odd): ".encode("utf-8"))
+    player_socket.sendall(f"Hello {player_name}, welcome to Roulette. I am generating a number between 0 and 36... ".encode("utf-8"))
     
     # Add the player to the list of clients
     clients.append(player_socket)
@@ -46,7 +58,7 @@ def send_waiting_message():
     global client_guesses
     
     if len(client_guesses) < NUM_CLIENTS:
-        waiting_message = "Waiting for other users to make their guess..."
+        waiting_message = "Spinning..."
         for client_socket in clients:
             client_socket.sendall(waiting_message.encode("utf-8"))
 
@@ -55,8 +67,8 @@ def announce_result():
     global clients
     global client_guesses
     
-    # Generate a random number (0 for even, 1 for odd)
-    winning_number = random.randint(0, 1)
+    # Generate a random number between 0 and 36
+    winning_number = random.randint(0, 36)
     
     # Notify each client if their guess is correct or incorrect, and provide the correct answer
     for client_socket, player_guess in zip(clients, client_guesses):
