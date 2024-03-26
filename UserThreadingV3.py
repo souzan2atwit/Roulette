@@ -13,9 +13,15 @@ Created on Mon Feb  5 15:57:54 2024
 """
 
 import socket
+from threading import Timer
+
+player_guess="nothing"
+
 
 # Function for client to join the game and make a guess
 def main():
+    global player_guess
+    
     inSession=True
     server_address = ("localhost", 9999)
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,10 +35,21 @@ def main():
     while(inSession):
         message = client_socket.recv(1024).decode("utf-8")
         print(message)
-    
+        
         # Make a guess (0 for even, 1 for odd)
         #print("work")
-        player_guess = input("Guess what the number will be: ")
+        
+        timer = Timer(5, print, ['sorry you are out of time please input an answer although it no longer matters'])
+        timer.start()
+        player_guess = input("\nguess a number")
+        timer.cancel()
+        
+       
+       
+        
+       
+        
+       
         client_socket.sendall(player_guess.encode("utf-8"))
     
         # Receive the result of the guess and the correct answer

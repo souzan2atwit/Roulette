@@ -27,19 +27,25 @@ clients = []
 #Either odd or even
 #Can implement individual number guesses 
 #Can implement colors such as black or red
-client_guesses = [] 
+client_guesses = [[]] 
 
 #number of clients currently connected
 num_clients=0
 
 lobbySize=3 # number of players alowed in a lobby
 playerInfo={} # saves player info such as name and lobby number
+lobbyNumber=1
+lobbies=[[]]
 
 # Function to handle each player's connection
 def handle_player(player_socket, player_address):
     global clients 
     global client_guesses
     global num_clients
+    global lobbies
+    global lobbyNumber
+    global lobbySize
+    global playerInfo
     inSession=True
     player_name = player_socket.recv(1024).decode("utf-8")
     print(f"{player_name} joined the game.")
@@ -47,48 +53,68 @@ def handle_player(player_socket, player_address):
     
     # Add the player to the list of clients
     clients.append(player_socket)
+    clients.append(player_name)
+    playerInfo[player_name]=[]
+    playerInfo[player_name].insert(0,player_socket)
+    playerInfo[player_name].insert(1,0)
     num_clients=num_clients+1
+    pos=0
+    inLobby=False
+    while(pos<lobbyNumber):
+        if(len(lobbies[pos])<lobbySize):
+            lobbies[pos].append(player_name)
+            playerInfo[player_name].insert(2,pos)
+            inLobby=True
+            break
+        pos+=1
+    if inLobby==False:
+        lobbies.append([])
+        lobbies[lobbies.len].append(player_name)
+        playerInfo[player_name].insert(2,pos)
+        lobbyNumber+=1
     # Receive the player's guess     
     player_socket.sendall(f"Hello {player_name}, welcome to Roulette. I am generating a number between 0 and 36... ".encode("utf-8"))
 
     while (inSession):
+            
             player_guess = player_socket.recv(1024).decode("utf-8")
-            client_guesses.append(player_guess)
-    
+            client_guesses[playerInfo[player_name][2]].append(player_guess)
+            playerInfo[player_name].insert(3,player_guess)
     
     # Inform the clients if waiting for other users to make their guess
-            send_waiting_message()
+            send_waiting_message(player_name)
 
     # If all clients have made a guess, proceed to announce the result
-            while len(client_guesses) != num_clients:
-                print("")
-            announce_result()
-            client_guesses.clear()
+            
+            announce_result(lobbies[playerInfo[player_name][2]])
+            for lists in client_guesses:
+                lists.clear()
 
 # Function to send a waiting message to clients if waiting for other users to make their guess
-def send_waiting_message():
+def send_waiting_message(pl):
     global clients
     global client_guesses
-    
-    if len(client_guesses) < num_clients:
+    global playerInfo
+    if len(client_guesses[playerInfo[pl][2]]) < len(lobbies[playerInfo[pl][2]]):
         waiting_message = "Spinning..."
-        for client_socket in clients:
-            client_socket.sendall(waiting_message.encode("utf-8"))
+        for playerInfo[pl] in clients:
+            playerInfo[pl][0].sendall(waiting_message.encode("utf-8"))
 
 # Function to announce the result after all clients have made a guess
-def announce_result():
+def announce_result(Lobby):
     global clients
     global client_guesses
+    global playerInfo
+    
     
     # Generate a random number between 0 and 36
     winning_number = random.randint(0, 36)
-    #32, 19, 21, 25, 34, 27, 36, 30, 23, 5, 16, 1, 14, 9, 18, 7, 12, 3
     # Notify each client if their guess is correct or incorrect, and provide the correct answer
-    for client_socket, player_guess in zip(clients, client_guesses):
-        print(player_guess)
-        if player_guess == str(winning_number):
-            client_socket.sendall("Congratulations! Your guess is correct.".encode("utf-8"))
-        elif "black" in player_guess.lower() and (winning_number==15 
+    for player in Lobby:
+        if playerInfo[player][2] == str(winning_number):
+            playerInfo[clients][1]=playerInfo[clients][1]+1
+            playerInfo[player][0].sendall("Congratulations! Your guess is correct.".encode("utf-8"))
+        elif "black" in playerInfo[player][3] and (winning_number==15 
                                                   or winning_number==4 
                                                   or winning_number==2 
                                                   or winning_number==17 
@@ -106,8 +132,9 @@ def announce_result():
                                                   or winning_number==28
                                                   or winning_number==35
                                                   or winning_number==26):
-            client_socket.sendall("Congratulations! Your guess is correct.".encode("utf-8"))
-        elif "red" in player_guess.lower()and (winning_number==32 
+            playerInfo[clients][1]=playerInfo[clients][1]+1
+            playerInfo[player][0].sendall("Congratulations! Your guess is correct.".encode("utf-8"))
+        elif "red" in playerInfo[player][3].lower()and (winning_number==32 
                                                   or winning_number==19 
                                                   or winning_number==21 
                                                   or winning_number==25 
@@ -125,14 +152,17 @@ def announce_result():
                                                   or winning_number==7
                                                   or winning_number==12
                                                   or winning_number==3):
-            client_socket.sendall("Congratulations! Your guess is correct.".encode("utf-8"))
-        elif "odd" in player_guess.lower() and winning_number%2==1:
-            client_socket.sendall("Congratulations! Your guess is correct.".encode("utf-8"))
-        elif "even" in player_guess.lower()and winning_number%2==0:
-            client_socket.sendall("Congratulations! Your guess is correct.".encode("utf-8"))
+            playerInfo[clients][1]=playerInfo[clients][1]+1
+            playerInfo[player][0].sendall("Congratulations! Your guess is correct.".encode("utf-8"))
+        elif "odd" in playerInfo[player][3].lower() and winning_number%2==1:
+            playerInfo[clients][1]=playerInfo[clients][1]+1
+            playerInfo[player][0].sendall("Congratulations! Your guess is correct.".encode("utf-8"))
+        elif "even" in playerInfo[player][3].lower()and winning_number%2==0:
+            playerInfo[clients][1]=playerInfo[clients][1]+1
+            playerInfo[player][0].sendall("Congratulations! Your guess is correct.".encode("utf-8"))
         else:
-            client_socket.sendall("Sorry, your guess is incorrect.".encode("utf-8"))
-        client_socket.sendall(f"The answer is: {winning_number}".encode("utf-8"))
+           playerInfo[player][0].sendall("Sorry, your guess is incorrect.".encode("utf-8"))
+        playerInfo[player][0].sendall(f"The answer is: {winning_number}".encode("utf-8"))
         #client_socket.close()
 
 # Main function to start the server
