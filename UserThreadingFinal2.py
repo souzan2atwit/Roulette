@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Feb  9 15:25:48 2024
-
-@author: souzan2
-"""
-
-# -*- coding: utf-8 -*-
-"""
 Created on Mon Feb  5 15:57:54 2024
 
-@author: souzan2
+@author: Nicholas Souza, Tyger Maguire
 """
 
 import socket
@@ -46,6 +39,7 @@ def main():
             
     
     client_socket.close()
+#function that will repeatedly allow for inputs to be sent to the server
 def send():
     global client_socket
     global inSession
@@ -54,6 +48,7 @@ def send():
         client_socket.sendall(playerText.encode("utf-8"))
         if playerText=="end":
             inSession=False
+#function that will repeatedly allow for data to be recved from the server
 def recv():
     global client_socket
     global inSession
